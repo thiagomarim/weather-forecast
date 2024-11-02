@@ -42,24 +42,12 @@ class PrevisaoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Previsão do Tempo',
+      title: 'Previsão',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        brightness: Brightness.light,
-        cardTheme: CardTheme(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-        ),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        cardTheme: CardTheme(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+        useMaterial3: true,
+        colorScheme: ColorScheme.light(
+          primary: Colors.black,
+          surface: Colors.white,
         ),
       ),
       home: PrevisaoPage(),
@@ -74,7 +62,6 @@ class PrevisaoPage extends StatefulWidget {
 
 class _PrevisaoPageState extends State<PrevisaoPage> {
   late Future<List<Previsao>> previsoes;
-  bool isDarkMode = false;
 
   @override
   void initState() {
@@ -90,145 +77,78 @@ class _PrevisaoPageState extends State<PrevisaoPage> {
       List<dynamic> data = jsonDecode(response.body);
       return data.map((item) => Previsao.fromJson(item)).toList();
     } else {
-      throw Exception('Falha ao carregar a previsão do tempo');
+      throw Exception('Falha ao carregar dados');
     }
-  }
-
-  Color getTemperatureColor(double temp) {
-    if (temp < 15) return Colors.blue;
-    if (temp < 25) return Colors.green;
-    return Colors.orange;
-  }
-
-  Widget _buildInfoCard(
-      String title, String value, IconData icon, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Icon(icon, size: 30, color: color),
-            SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Previsão do Tempo'),
-        actions: [
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
-              setState(() {
-                isDarkMode = !isDarkMode;
-              });
-            },
-          ),
-        ],
+        title: Text('Previsão', style: TextStyle(fontSize: 20)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: FutureBuilder<List<Previsao>>(
         future: previsoes,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 60, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text('Erro: ${snapshot.error}'),
-                ],
-              ),
-            );
+                child: CircularProgressIndicator(color: Colors.black));
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro ao carregar dados'));
           } else if (snapshot.hasData) {
             return ListView.builder(
               padding: EdgeInsets.all(16),
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final previsao = snapshot.data![index];
-                return Card(
-                  margin: EdgeInsets.only(bottom: 16),
-                  child: ExpansionTile(
-                    title: Text(
-                      'Previsão para ${previsao.data}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                return Container(
+                  margin: EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: GridView.count(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          children: [
-                            _buildInfoCard(
-                              'Temperatura',
-                              '${previsao.temperatura}°${previsao.unidade}',
-                              Icons.thermostat,
-                              getTemperatureColor(previsao.temperatura),
-                            ),
-                            _buildInfoCard(
-                              'Umidade',
-                              '${previsao.umidade}%',
-                              Icons.water_drop,
-                              Colors.blue,
-                            ),
-                            _buildInfoCard(
-                              'Luminosidade',
-                              '${previsao.luminosidade} lux',
-                              Icons.wb_sunny,
-                              Colors.amber,
-                            ),
-                            _buildInfoCard(
-                              'Vento',
-                              '${previsao.vento} m/s',
-                              Icons.air,
-                              Colors.grey,
-                            ),
-                            _buildInfoCard(
-                              'Chuva',
-                              '${previsao.chuva} mm',
-                              Icons.umbrella,
-                              Colors.indigo,
-                            ),
-                          ],
+                      Text(
+                        previsao.data,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${previsao.temperatura}°${previsao.unidade}',
+                            style: TextStyle(fontSize: 32),
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.water_drop, size: 16),
+                              Text(' ${previsao.umidade}%'),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.air, size: 16),
+                          Text(' ${previsao.vento} m/s'),
+                          SizedBox(width: 16),
+                          Icon(Icons.umbrella, size: 16),
+                          Text(' ${previsao.chuva} mm'),
+                        ],
+                      ),
+                      Divider(height: 32),
                     ],
                   ),
                 );
               },
             );
-          } else {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.cloud_off, size: 60, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Nenhuma previsão disponível.'),
-                ],
-              ),
-            );
           }
+          return Center(child: Text('Sem dados disponíveis'));
         },
       ),
     );
